@@ -1,0 +1,29 @@
+body{
+    background-color: #94402d;
+}
+h1{
+    color:#611a0a;
+}
+h2{
+    color: #ffedc7;
+}
+.post-subtitle{
+   color: #611a0a;
+   font-size: large;
+   font-weight: 600;
+}
+.logo{
+    position: fixed;
+    top: 0px;
+    left: 10px;
+    z-index: 1;
+}
+.logo img {
+    width: 90px;  /* Adjust size */
+    height: auto;
+    cursor: pointer;
+}
+hr{
+    border-color: #f6b13a;
+}
+

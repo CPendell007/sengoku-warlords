@@ -1,0 +1,17 @@
+body{
+    background-color: #611a0a;
+}
+p{
+    color: antiquewhite;
+}
+.form-control {
+    background-color: antiquewhite;
+}
+#submitButton {
+    background-color: #f6b13a; 
+    color: #611a0a;        
+    border-color: #f6b13a;  
+  }
+.fire{
+    text-align: center;
+}

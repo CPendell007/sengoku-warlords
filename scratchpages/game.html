@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sengoku Battle Game - Arcade V2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles */
+        :root {
+            --dark-red-brown: #611a0a;
+            --light-beige: #fff6ea;
+            --medium-red-brown: #9b2409;
+            --antique-white: #faebd7;
+        }
+
+        body {
+            font-family: 'Press Start 2P', cursive; /* Arcade font */
+            overflow: hidden; /* Prevent scrollbars */
+            background-image: url(img/resized_image_1920x1080.png);
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-attachment: fixed;
+            height: 80vh;
+            margin: 0;  
+            color: var(--dark-red-brown); /* Dark text color */
+        }
+
+        h1, h2, button, #score {
+             font-family: 'Press Start 2P', cursive; /* Ensure arcade font */
+        }
+
+        /* Ensure game area has a defined aspect ratio or size */
+        #gameArea {
+            position: relative;
+            width: 100%;
+            max-width: 800px; /* Max width for the game */
+            height: 500px; /* Fixed height */
+            background-color: var(--antique-white); /* Use antique white for battlefield */
+            border: 4px solid var(--dark-red-brown); /* Thick dark border */
+            margin: 0 auto; /* Center the game area */
+            overflow: hidden; /* Keep elements inside */
+            border-radius: 0; /* Sharp corners for pixel look */
+            image-rendering: pixelated; /* Hint for browsers */
+        }
+
+        /* Styling for Castle Images */
+        .castle {
+            position: absolute;
+            width: 150px; /* Adjust width based on image aspect ratio */
+            height: 120px; /* Adjust height */
+            /* Remove background, border, text styles from previous version */
+            object-fit: contain; /* Scale image while preserving aspect ratio */
+            image-rendering: pixelated;
+            z-index: 5; /* Keep castles visually behind units */
+        }
+
+        #playerCastle {
+            bottom: 5px; /* Position near bottom */
+            left: 50%;
+            transform: translateX(-50%);
+            /* Optional: Add a slight filter if needed */
+        }
+
+        #enemyCastle {
+            top: 5px; /* Position near top */
+            left: 50%;
+            transform: translateX(-50%);
+            /* Flip enemy castle horizontally for variation */
+            transform: translateX(-50%) scaleX(-1);
+        }
+
+        /* Style for the player image */
+        #playerUnit {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            image-rendering: pixelated;
+            object-fit: contain;
+            z-index: 10; /* Ensure player is above castle */
+        }
+
+        /* Style for the enemy images */
+        .enemyUnit {
+            position: absolute;
+            width: 50px; /* Slightly smaller than player */
+            height: 50px;
+            image-rendering: pixelated;
+            object-fit: contain;
+            z-index: 10; /* Ensure enemies are above castle */
+            /* Add a filter to differentiate enemies */
+        }
+
+        /* Arcade Button Styling (Unchanged) */
+        button {
+            background-color: var(--medium-red-brown);
+            color: var(--light-beige);
+            border: 3px solid var(--dark-red-brown);
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            border-radius: 0;
+            box-shadow: 4px 4px 0px var(--dark-red-brown);
+            transition: background-color 0.1s ease, transform 0.1s ease, box-shadow 0.1s ease;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        button:hover {
+            filter: none;
+            background-color: #b7341a;
+        }
+        button:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px var(--dark-red-brown);
+        }
+
+        /* Screen Styling (Unchanged) */
+        #startScreen, #battleSelectionScreen, #factionSelectionScreen {
+             background-color: var(--antique-white);
+             border: 4px solid var(--dark-red-brown);
+             border-radius: 0;
+             box-shadow: 6px 6px 0px var(--dark-red-brown);
+             padding: 2rem;
+        }
+
+        /* Scoreboard Styling (Unchanged) */
+        #gameScreen > div:first-child {
+             background-color: var(--antique-white);
+             border: 4px solid var(--dark-red-brown);
+             border-radius: 0;
+             padding: 0.5rem 1rem;
+             margin-bottom: 0.5rem;
+             font-size: 0.8rem;
+        }
+        #score {
+            color: var(--medium-red-brown);
+        }
+
+        /* Message Box Styling (Unchanged) */
+        #messageBox {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--antique-white);
+            color: var(--dark-red-brown);
+            padding: 2rem;
+            border-radius: 0;
+            border: 4px solid var(--dark-red-brown);
+            box-shadow: 8px 8px 0px var(--dark-red-brown);
+            z-index: 100;
+            text-align: center;
+            max-width: 90%;
+            width: 450px;
+            line-height: 1.5;
+        }
+         #messageBox h2 { margin-bottom: 1rem; font-size: 1.2rem; }
+         #messageBox p { margin-bottom: 1.5rem; font-size: 0.8rem; }
+         #messageBox button { margin-top: 1rem; }
+
+         /* Hide default tailwind base styles interfering with pixel look (Unchanged) */
+         *, ::before, ::after { border-width: 0; }
+
+         /* Katana icon (Unchanged) */
+        .katana-icon { display: inline-block; width: 1em; height: 1em; margin-left: 0.5em; vertical-align: -0.125em; fill: currentColor; }
+    
+    </style>
+    <link rel="stylesheet" href="divstyles.css">
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+    <div class="logo">
+        <a href="index.html"><img src="img/newlogo.png" alt=""></a> 
+    </div>
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+      <symbol id="katana" viewBox="0 0 24 24">
+        <path d="M21.71,3.29a1,1,0,0,0-1.42,0l-4.58,4.58a1,1,0,0,0,0,1.42l.83.83L3.29,21.71a1,1,0,0,0,0,1.42,1,1,0,0,0,1.42,0L16.29,11.5l.83.83a1,1,0,0,0,1.42,0l4.58-4.58A1,1,0,0,0,21.71,3.29Z"/>
+        <path d="M14.86 10.08l-1.58-1.58l4.42-4.42l1.58 1.58z"/>
+        <path d="M9.92 14.86l-1.58-1.58l4.42-4.42l1.58 1.58z"/>
+      </symbol>
+    </svg>
+
+    <h1 class="text-2xl mb-6">Sengoku Battle Game
+        <svg class="katana-icon"><use xlink:href="#katana"/></svg>
+    </h1>
+
+    <div id="startScreen" class="text-center">
+        <h2 class="text-xl mb-4">Welcome, Warlord!</h2>
+        <p class="mb-6 text-sm">Defend your lands!</p>
+        <button id="startButton">Start Game</button>
+    </div>
+
+    <div id="battleSelectionScreen" class="hidden text-center max-w-lg w-full">
+        <h2 class="text-xl mb-4">Choose Battle</h2>
+        <p class="mb-6 text-sm">Select a conflict:</p>
+        <div id="battleOptions" class="space-y-4"> </div>
+    </div>
+
+    <div id="factionSelectionScreen" class="hidden text-center max-w-lg w-full">
+        <h2 class="text-xl mb-4">Choose Faction</h2>
+        <p id="factionDescription" class="mb-6 text-sm">Command which side in <span id="selectedBattleName" class="font-bold">Battle</span>?</p>
+        <div id="factionOptions" class="flex flex-col sm:flex-row justify-center items-center space-y-3 sm:space-y-0 sm:space-x-4"></div>
+    </div>
+
+    <div id="gameScreen" class="hidden w-full max-w-4xl">
+        <div class="flex justify-between items-center">
+             <div>Battle: <span id="gameBattleName"></span></div>
+            <div>Faction: <span id="gameFactionName"></span></div>
+            <div>Score: <span id="score" class="text-lg">0</span></div>
+        </div>
+        <div id="gameArea">
+            <img id="playerCastle" class="castle" src="img/castle.png" alt="Player Castle">
+            <img id="enemyCastle" class="castle" src="img/evilcastle.png" alt="Enemy Castle">
+            <img id="playerUnit" src="img/Nobunaga.png" alt="Player Warlord">
+            </div>
+         <p class="text-center mt-2 text-xs">Use Arrow Keys or WASD to move!</p>
+    </div>
+
+    <div id="messageBox" class="hidden">
+        <h2 id="messageTitle">Game Over</h2>
+        <p id="messageText">Your final score is 0.</p>
+        <p id="historicalAccuracyText" class="italic text-xs"></p>
+        <button id="restartButton">Play Again</button>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const startScreen = document.getElementById('startScreen');
+        const battleSelectionScreen = document.getElementById('battleSelectionScreen');
+        const factionSelectionScreen = document.getElementById('factionSelectionScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const messageBox = document.getElementById('messageBox');
+
+        const startButton = document.getElementById('startButton');
+        const battleOptionsDiv = document.getElementById('battleOptions');
+        const factionOptionsDiv = document.getElementById('factionOptions');
+        const selectedBattleNameSpan = document.getElementById('selectedBattleName');
+        const factionDescriptionP = document.getElementById('factionDescription');
+
+        const gameArea = document.getElementById('gameArea');
+        const playerUnit = document.getElementById('playerUnit');
+        const scoreSpan = document.getElementById('score');
+        const gameBattleNameSpan = document.getElementById('gameBattleName');
+        const gameFactionNameSpan = document.getElementById('gameFactionName');
+        const playerCastle = document.getElementById('playerCastle'); // Get castle element
+
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        const historicalAccuracyText = document.getElementById('historicalAccuracyText');
+        const restartButton = document.getElementById('restartButton');
+
+        // --- Game Data (Unchanged) ---
+        const battles = [
+             { id: 'okehazama', name: "Okehazama (1560)", factions: [{ name: "Oda", id: "oda" }, { name: "Imagawa", id: "imagawa" }], historicalWinner: "oda" },
+             { id: 'nagashino', name: "Nagashino (1575)", factions: [{ name: "Oda/Tokugawa", id: "oda_tokugawa" }, { name: "Takeda", id: "takeda" }], historicalWinner: "oda_tokugawa" },
+             { id: 'sekigahara', name: "Sekigahara (1600)", factions: [{ name: "Tokugawa", id: "tokugawa" }, { name: "Ishida", id: "ishida" }], historicalWinner: "tokugawa" },
+             { id: 'anegawa', name: "Anegawa (1570)", factions: [{ name: "Oda/Tokugawa", id: "oda_tokugawa_ane"}, { name: "Azai/Asakura", id: "azai_asakura"}], historicalWinner: "oda_tokugawa_ane" },
+             { id: 'kawanakajima', name: "Kawanakajima (1561)", factions: [{ name: "Takeda", id: "takeda_kawa" }, { name: "Uesugi", id: "uesugi" }], historicalWinner: "takeda_kawa" }
+        ];
+
+        // --- Game State Variables ---
+        let score = 0;
+        let gameActive = false;
+        let playerX, playerY;
+        let playerSpeed = 6;
+        let enemies = [];
+        let enemyBaseSpeed = 0.8;
+        let enemySpeedMultiplier = 0.15;
+        let enemySpawnRate = 1800;
+        let minEnemySpawnRate = 600;
+        let spawnRateDecrease = 50;
+        let lastSpawnTime = 0;
+        let animationFrameId;
+        let currentBattle = null;
+        let chosenFaction = null;
+        const keysPressed = {};
+
+        // --- Game Constants ---
+        const WIN_SCORE = 100;
+        const PLAYER_BOTTOM_MARGIN = 10; // Space between player lowest point and top of castle
+        const ENEMY_START_Y = 50; // Y position where enemies spawn
+
+        // --- Utility Functions (Unchanged) ---
+        function showScreen(screenElement) { /* ... */
+             startScreen.classList.add('hidden');
+             battleSelectionScreen.classList.add('hidden');
+             factionSelectionScreen.classList.add('hidden');
+             gameScreen.classList.add('hidden');
+             messageBox.classList.add('hidden');
+             screenElement.classList.remove('hidden');
+         }
+        function getRandomBattles(allBattles, count) { /* ... */
+             const shuffled = [...allBattles].sort(() => 0.5 - Math.random());
+             return shuffled.slice(0, count);
+         }
+        function createButton(text, onClick) { /* ... */
+              const button = document.createElement('button');
+              button.textContent = text;
+              button.onclick = onClick;
+              return button;
+          }
+
+        // --- Screen Setup Functions (Unchanged) ---
+        function setupBattleSelection() { /* ... */
+             battleOptionsDiv.innerHTML = '';
+             const selectedBattles = getRandomBattles(battles, 3);
+             selectedBattles.forEach(battle => {
+                 const button = createButton(battle.name, () => selectBattle(battle));
+                 battleOptionsDiv.appendChild(button);
+             });
+             showScreen(battleSelectionScreen);
+         }
+        function selectBattle(battle) { /* ... */
+             currentBattle = battle;
+             setupFactionSelection();
+         }
+        function setupFactionSelection() { /* ... */
+             factionOptionsDiv.innerHTML = '';
+             selectedBattleNameSpan.textContent = currentBattle.name;
+             factionDescriptionP.classList.remove('hidden');
+             currentBattle.factions.forEach(faction => {
+                 const button = createButton(faction.name, () => selectFaction(faction));
+                 factionOptionsDiv.appendChild(button);
+             });
+             showScreen(factionSelectionScreen);
+         }
+         function selectFaction(faction) { /* ... */
+             chosenFaction = faction;
+             startGame();
+         }
+
+        // --- Game Logic Functions ---
+        function startGame() {
+            console.log(`Starting ${currentBattle.name} as ${chosenFaction.name}`);
+            score = 0;
+            enemies = [];
+            gameActive = true;
+            lastSpawnTime = 0;
+            updateScoreDisplay();
+
+            gameBattleNameSpan.textContent = currentBattle.name;
+            gameFactionNameSpan.textContent = chosenFaction.name;
+
+            const gameAreaRect = gameArea.getBoundingClientRect();
+            const playerWidth = playerUnit.offsetWidth || 40;
+            const playerHeight = playerUnit.offsetHeight || 40;
+            const castleHeight = playerCastle.offsetHeight || 120; // Get castle height
+
+            // Start player above the castle
+            playerX = gameAreaRect.width / 2 - playerWidth / 2;
+            playerY = gameAreaRect.height - castleHeight - playerHeight - PLAYER_BOTTOM_MARGIN; // Position above castle
+            playerUnit.style.left = `${playerX}px`;
+            playerUnit.style.top = `${playerY}px`;
+            playerUnit.style.display = 'block';
+
+            // Clear existing enemies
+            const existingEnemies = gameArea.querySelectorAll('.enemyUnit');
+            existingEnemies.forEach(enemy => enemy.remove());
+
+            showScreen(gameScreen);
+            gameLoop();
+        }
+
+        function updateScoreDisplay() {
+            scoreSpan.textContent = score;
+        }
+
+        function movePlayer() {
+            const gameAreaRect = gameArea.getBoundingClientRect();
+            const playerWidth = playerUnit.offsetWidth || 40;
+            const playerHeight = playerUnit.offsetHeight || 40;
+            const castleHeight = playerCastle.offsetHeight || 120; // Get castle height for boundary
+
+            let dx = 0;
+            let dy = 0;
+            if (keysPressed['ArrowLeft'] || keysPressed['a']) dx -= playerSpeed;
+            if (keysPressed['ArrowRight'] || keysPressed['d']) dx += playerSpeed;
+            if (keysPressed['ArrowUp'] || keysPressed['w']) dy -= playerSpeed;
+            if (keysPressed['ArrowDown'] || keysPressed['s']) dy += playerSpeed;
+
+            let newX = playerX + dx;
+            let newY = playerY + dy;
+
+            // Boundary checks
+            newX = Math.max(0, Math.min(gameAreaRect.width - playerWidth, newX));
+            // Player stays in bottom half, above the castle
+            const minY = gameAreaRect.height / 2;
+            const maxY = gameAreaRect.height - castleHeight - playerHeight - PLAYER_BOTTOM_MARGIN; // Top boundary is above the castle
+            newY = Math.max(minY, Math.min(maxY, newY));
+
+            playerX = newX;
+            playerY = newY;
+            playerUnit.style.left = `${playerX}px`;
+            playerUnit.style.top = `${playerY}px`;
+        }
+
+        // --- Updated spawnEnemy ---
+        function spawnEnemy() {
+            const gameAreaRect = gameArea.getBoundingClientRect();
+            // Create an image element for the enemy
+            const enemy = document.createElement('img');
+            enemy.src = 'img/evil samurai.png'; // Use the same image as player
+            enemy.alt = 'Enemy Unit';
+            enemy.classList.add('enemyUnit'); // Apply CSS styling
+            const enemySize = 30; // Match CSS width/height
+
+            // Spawn at a random horizontal position near the top edge
+            const spawnX = Math.random() * (gameAreaRect.width - enemySize);
+            const spawnY = ENEMY_START_Y; // Use constant
+
+            enemy.style.left = `${spawnX}px`;
+            enemy.style.top = `${spawnY}px`;
+            enemy.style.position = 'absolute'; // Ensure position is absolute
+
+            gameArea.appendChild(enemy);
+            // Store the image element itself
+            enemies.push({ element: enemy, x: spawnX, y: spawnY });
+        }
+
+        // --- Updated moveEnemies ---
+        function moveEnemies() {
+            // Get player castle's top boundary dynamically
+            const playerCastleTopBoundary = playerCastle.offsetTop;
+
+            const currentEnemySpeed = enemyBaseSpeed + Math.floor(score / 10) * enemySpeedMultiplier;
+
+            enemies.forEach((enemyData, index) => {
+                enemyData.y += currentEnemySpeed;
+                enemyData.element.style.top = `${enemyData.y}px`;
+
+                // Check if enemy reached the player's castle area
+                // Use enemy's bottom edge vs castle's top edge
+                if (enemyData.y + enemyData.element.offsetHeight >= playerCastleTopBoundary) {
+                    console.log("Enemy reached castle!");
+                    endGame(false); // Player loses
+                    return; // Stop processing this enemy after loss
+                }
+            });
+        }
+
+        // --- checkCollisions (Largely Unchanged) ---
+        function checkCollisions() {
+            const playerRect = playerUnit.getBoundingClientRect();
+            if (playerRect.width === 0 || playerRect.height === 0) return;
+
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemyData = enemies[i];
+                // Ensure enemy element exists before getting rect
+                if (!enemyData.element) continue;
+                const enemyRect = enemyData.element.getBoundingClientRect();
+                 if (enemyRect.width === 0 || enemyRect.height === 0) continue; // Skip if enemy image not loaded
+
+                const isColliding = (
+                    playerRect.left < enemyRect.right &&
+                    playerRect.right > enemyRect.left &&
+                    playerRect.top < enemyRect.bottom &&
+                    playerRect.bottom > enemyRect.top
+                );
+
+                if (isColliding) {
+                    console.log("Intercepted!");
+                    // Remove enemy element from DOM and array
+                    enemyData.element.remove();
+                    enemies.splice(i, 1);
+
+                    score += 10;
+                    updateScoreDisplay();
+
+                    if (score >= WIN_SCORE) {
+                        endGame(true);
+                        return;
+                    }
+                }
+            }
+        }
+
+        // --- endGame (Unchanged text, logic remains same) ---
+        function endGame(playerWon) { /* ... */
+             gameActive = false;
+             cancelAnimationFrame(animationFrameId);
+             playerUnit.style.display = 'none';
+
+             let accuracyMsg = "";
+             const didPlayerFactionWinHistorically = currentBattle.historicalWinner === chosenFaction.id;
+
+             if (playerWon) {
+                 messageTitle.textContent = "VICTORY!";
+                 messageText.textContent = `CASTLE DEFENDED! SCORE: ${score}`;
+                 if (didPlayerFactionWinHistorically) accuracyMsg = `ALIGNS WITH HISTORY! ${chosenFaction.name} WON ${currentBattle.name}!`;
+                 else accuracyMsg = `HISTORY DEFIED! ${chosenFaction.name} DID NOT WIN ${currentBattle.name}!`;
+             } else {
+                 messageTitle.textContent = "DEFEAT!";
+                 messageText.textContent = `CASTLE BREACHED! SCORE: ${score}`;
+                  if (!didPlayerFactionWinHistorically) accuracyMsg = `ALIGNS WITH HISTORY. ${chosenFaction.name} LOST ${currentBattle.name}.`;
+                  else accuracyMsg = `AGAINST HISTORY! ${chosenFaction.name} HISTORICALLY WON ${currentBattle.name}!`;
+             }
+             historicalAccuracyText.textContent = accuracyMsg;
+             messageBox.classList.remove('hidden');
+         }
+
+        // --- Game Loop (Unchanged) ---
+        function gameLoop(timestamp) { /* ... */
+             if (!gameActive) return;
+             movePlayer();
+             const currentSpawnRate = Math.max(minEnemySpawnRate, enemySpawnRate - Math.floor(score / 10) * spawnRateDecrease);
+             if (timestamp - lastSpawnTime > currentSpawnRate) {
+                 spawnEnemy();
+                 lastSpawnTime = timestamp;
+             }
+             moveEnemies();
+             checkCollisions();
+             animationFrameId = requestAnimationFrame(gameLoop);
+         }
+
+        // --- Event Listeners (Unchanged) ---
+        startButton.addEventListener('click', setupBattleSelection);
+        restartButton.addEventListener('click', () => { /* ... */
+             messageBox.classList.add('hidden');
+             setupBattleSelection();
+         });
+        window.addEventListener('keydown', (e) => { /* ... */
+              if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(e.key)) {
+                 if (gameActive) keysPressed[e.key] = true;
+                  e.preventDefault();
+             }
+          });
+        window.addEventListener('keyup', (e) => { /* ... */
+              if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(e.key)) {
+                  keysPressed[e.key] = false;
+                  e.preventDefault();
+             }
+          });
+
+        // --- Initial Setup ---
+        playerUnit.style.display = 'none';
+        showScreen(startScreen);
+
+    </script>
+
+</body>
+</html>
